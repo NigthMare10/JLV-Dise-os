@@ -53,16 +53,12 @@ jobs:
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-        with:
-          # Automatically inject basePath in your Next.js configuration file and propagate
-          # it to next/link. Free text: https://github.com/actions/configure-pages
-          static_site_generator: next
       - name: Install dependencies
         run: npm install
       - name: Build with Next.js
         run: npm run build
+      - name: Debug Output
+        run: ls -R
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
