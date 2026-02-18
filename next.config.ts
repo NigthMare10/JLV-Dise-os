@@ -1,10 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  poweredByHeader: false, // Hide that we are using Next.js for security
-  // Ensure strict minification and disable source maps in production to obfuscate code structure
-  productionBrowserSourceMaps: false,
+  output: 'export',
+  basePath: '/JLV-Dise-os',
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

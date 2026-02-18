@@ -2,6 +2,19 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, CartItem, StoreContextType } from '../types';
+import { db } from '../lib/firebase';
+import {
+    collection,
+    onSnapshot,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    doc,
+    query,
+    orderBy,
+    getDocs,
+    setDoc
+} from 'firebase/firestore';
 
 const defaultProducts: Product[] = [
     {
@@ -52,56 +65,90 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     const [products, setProducts] = useState<Product[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // Load initial data with error handling
+    // Sync Products with Firestore
     useEffect(() => {
-        try {
-            const storedProducts = localStorage.getItem('jlv_products');
-            const storedCart = localStorage.getItem('jlv_cart');
+        const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
 
-            if (storedProducts) {
-                const parsed = JSON.parse(storedProducts);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    setProducts(parsed);
-                } else {
-                    setProducts(defaultProducts);
-                }
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const productsData: Product[] = [];
+            snapshot.forEach((doc) => {
+                productsData.push({ id: doc.id, ...doc.data() } as Product);
+            });
+
+            if (productsData.length === 0 && loading) {
+                // If firestore is empty and it's the first load, seed with defaults
+                seedDefaults();
             } else {
-                setProducts(defaultProducts); // Seed initial data
+                setProducts(productsData);
+                setLoading(false);
             }
-
-            if (storedCart) {
-                const parsedCart = JSON.parse(storedCart);
-                if (Array.isArray(parsedCart)) {
-                    setCart(parsedCart);
-                }
-            }
-        } catch (error) {
-            console.error('Error loading data from localStorage:', error);
+        }, (error) => {
+            console.error("Error fetching products from Firestore:", error);
+            // Fallback to defaults if Firestore fails (e.g. invalid config)
             setProducts(defaultProducts);
-            setCart([]);
+            setLoading(false);
+        });
+
+        // Load Cart from localStorage
+        const storedCart = localStorage.getItem('jlv_cart');
+        if (storedCart) {
+            try {
+                setCart(JSON.parse(storedCart));
+            } catch (e) {
+                console.error("Error parsing cart:", e);
+            }
         }
+
+        return () => unsubscribe();
     }, []);
 
-    // Save to localStorage on change
-    useEffect(() => {
-        if (products.length > 0) localStorage.setItem('jlv_products', JSON.stringify(products));
-    }, [products]);
+    const seedDefaults = async () => {
+        try {
+            for (const p of defaultProducts) {
+                const { id, ...data } = p;
+                await setDoc(doc(db, 'products', id), data);
+            }
+        } catch (e) {
+            console.error("Error seeding defaults:", e);
+            setProducts(defaultProducts);
+            setLoading(false);
+        }
+    };
 
+    // Save Cart to localStorage on change
     useEffect(() => {
         localStorage.setItem('jlv_cart', JSON.stringify(cart));
     }, [cart]);
 
-    const addProduct = (product: Product) => {
-        setProducts([...products, product]);
+    const addProduct = async (product: Product) => {
+        try {
+            const { id, ...data } = product;
+            await addDoc(collection(db, 'products'), {
+                ...data,
+                createdAt: new Date().toISOString()
+            });
+        } catch (e) {
+            console.error("Error adding product:", e);
+        }
     };
 
-    const updateProduct = (id: string, updates: Partial<Product>) => {
-        setProducts(products.map(p => p.id === id ? { ...p, ...updates } : p));
+    const updateProduct = async (id: string, updates: Partial<Product>) => {
+        try {
+            const productRef = doc(db, 'products', id);
+            await updateDoc(productRef, updates);
+        } catch (e) {
+            console.error("Error updating product:", e);
+        }
     };
 
-    const deleteProduct = (id: string) => {
-        setProducts(products.filter(p => p.id !== id));
+    const deleteProduct = async (id: string) => {
+        try {
+            await deleteDoc(doc(db, 'products', id));
+        } catch (e) {
+            console.error("Error deleting product:", e);
+        }
     };
 
     const addToCart = (product: Product) => {
@@ -128,12 +175,13 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     const loginAdmin = () => setIsAdmin(true);
     const logoutAdmin = () => setIsAdmin(false);
 
-    const applyBulkPriceUpdate = (percentage: number) => {
+    const applyBulkPriceUpdate = async (percentage: number) => {
         const factor = 1 + (percentage / 100);
-        setProducts(products.map(p => ({
-            ...p,
-            price: Math.round(p.price * factor)
-        })));
+        for (const p of products) {
+            await updateProduct(p.id, {
+                price: Math.round(p.price * factor)
+            });
+        }
     };
 
     return (
