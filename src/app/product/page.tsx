@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useStore } from '@/context/store';
 import { Button } from '@/components/ui/Button';
@@ -9,8 +9,9 @@ import { Product } from '@/types';
 import { Minus, Plus, ShoppingCart, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ProductPage() {
-    const { id } = useParams();
+function ProductContent() {
+    const searchParams = useSearchParams();
+    const id = searchParams.get('id');
     const router = useRouter();
     const { products, addToCart } = useStore();
     const [product, setProduct] = useState<Product | undefined>(undefined);
@@ -119,5 +120,17 @@ export default function ProductPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ProductPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <ProductContent />
+        </Suspense>
     );
 }

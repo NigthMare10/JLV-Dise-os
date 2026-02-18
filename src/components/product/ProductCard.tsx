@@ -32,7 +32,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 <div className="flex items-center justify-between pt-4 mt-auto">
                     <span className="font-bold text-xl">L. {product.price.toFixed(2)}</span>
                     <div className="flex space-x-2">
-                        <Link href={`/product/${product.id}`}>
+                        <Link href={`/product?id=${product.id}`}>
                             <Button variant="outline" size="sm">Ver</Button>
                         </Link>
                         <Button size="sm" onClick={() => addToCart(product)}>
