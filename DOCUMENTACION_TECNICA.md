@@ -2,7 +2,7 @@
 
 > **Versión:** 1.0.0
 > **Fecha:** 18 de Febrero, 2026
-> **Autor:** Antigravity AI (Google DeepMind Team)
+> **Autor:** Cesar Andre Martinez Vivas 
 
 Esta documentación está dirigida a desarrolladores y mantenedores del proyecto. Contiene una descripción exhaustiva de la arquitectura, variables, funciones y lógica del sistema.
 
@@ -193,6 +193,3 @@ Actualmente, el proyecto es "Client-Side Only" para persistencia. Para conectar 
 - **Problema**: Error de hidratación en Next.js.
     - **Causa**: Diferencia entre HTML renderizado en servidor y cliente (común con `localStorage`).
     - **Solución**: Asegurarse de que el renderizado dependiente de datos guardados solo ocurra despues de que el componente se haya montado (`useEffect`). (Ya implementado correctamente en `StoreContext`).
-
----
-**Generado por Antigravity AI**
