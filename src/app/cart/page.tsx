@@ -16,7 +16,8 @@ export default function CartPage() {
 
         let message = "Hola JLV, me gustaría realizar el siguiente pedido:\n\n";
         cart.forEach(item => {
-            message += `- *${item.quantity}x ${item.title}* (L. ${(item.price * item.quantity).toFixed(2)})\n`;
+            const sizeInfo = item.selectedSize ? ` (Talla: ${item.selectedSize})` : '';
+            message += `- *${item.quantity}x ${item.title}${sizeInfo}* (L. ${(item.price * item.quantity).toFixed(2)})\n`;
         });
         message += `\n*TOTAL: L. ${total.toFixed(2)}*\n\nQuedo atento para coordinar el pago y envío.`;
 
@@ -43,8 +44,8 @@ export default function CartPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Cart Items List */}
                 <div className="lg:col-span-2 space-y-6">
-                    {cart.map((item) => (
-                        <div key={item.id} className="flex gap-4 border p-4 rounded-lg items-center bg-card">
+                    {cart.map((item, index) => (
+                        <div key={`${item.id}-${item.selectedSize || index}`} className="flex gap-4 border p-4 rounded-lg items-center bg-card">
                             <div className="w-24 h-24 relative bg-secondary rounded-md overflow-hidden flex-shrink-0">
                                 <Image
                                     src={item.imageUrl}
@@ -56,12 +57,15 @@ export default function CartPage() {
 
                             <div className="flex-grow space-y-1">
                                 <h3 className="font-semibold text-lg">{item.title}</h3>
+                                {item.selectedSize && (
+                                    <p className="text-sm bg-secondary inline-block px-2 py-0.5 rounded-full">Talla: {item.selectedSize}</p>
+                                )}
                                 <p className="text-muted-foreground text-sm">L. {item.price.toFixed(2)} c/u</p>
                             </div>
 
                             <div className="flex items-center space-x-3">
                                 <button
-                                    onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
+                                    onClick={() => updateCartQuantity(item.id, item.quantity - 1, item.selectedSize)}
                                     className="p-1 hover:bg-secondary rounded-full disabled:opacity-50"
                                     disabled={item.quantity <= 1}
                                 >
@@ -69,7 +73,7 @@ export default function CartPage() {
                                 </button>
                                 <span className="font-medium w-8 text-center">{item.quantity}</span>
                                 <button
-                                    onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                                    onClick={() => updateCartQuantity(item.id, item.quantity + 1, item.selectedSize)}
                                     className="p-1 hover:bg-secondary rounded-full"
                                 >
                                     <Plus className="h-4 w-4" />
@@ -81,13 +85,14 @@ export default function CartPage() {
                             </div>
 
                             <button
-                                onClick={() => removeFromCart(item.id)}
+                                onClick={() => removeFromCart(item.id, item.selectedSize)}
                                 className="text-destructive hover:text-red-700 p-2"
                             >
                                 <Trash2 className="h-5 w-5" />
                             </button>
                         </div>
                     ))}
+
 
                     <Button variant="ghost" className="text-muted-foreground" onClick={clearCart}>
                         Vaciar Carrito

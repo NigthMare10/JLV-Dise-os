@@ -21,10 +21,22 @@ export function ProductForm({ initialData, onSubmit, onCancel }: ProductFormProp
         price: initialData?.price || 0,
         imageUrl: initialData?.imageUrl || '',
         category: initialData?.category || '',
+        sizes: initialData?.sizes || [],
     });
     const [previewImage, setPreviewImage] = useState<string>(initialData?.imageUrl || '');
 
     const [error, setError] = useState<string>('');
+
+    const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+    const toggleSize = (size: string) => {
+        const currentSizes = formData.sizes || [];
+        if (currentSizes.includes(size)) {
+            setFormData({ ...formData, sizes: currentSizes.filter(s => s !== size) });
+        } else {
+            setFormData({ ...formData, sizes: [...currentSizes, size] });
+        }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,6 +54,13 @@ export function ProductForm({ initialData, onSubmit, onCancel }: ProductFormProp
         if (typeof formData.price !== 'number' || formData.price < 0) {
             setError('El precio debe ser un número válido mayor o igual a 0.');
             return;
+        }
+
+        // If category is clothing but no sizes, show warning or just keep it
+        if (formData.category === 'Ropa' && (!formData.sizes || formData.sizes.length === 0)) {
+            if (!confirm('No has seleccionado tallas para este artículo de ropa. ¿Deseas continuar?')) {
+                return;
+            }
         }
 
         // If no image is provided, use a placeholder
@@ -81,7 +100,7 @@ export function ProductForm({ initialData, onSubmit, onCancel }: ProductFormProp
                         </h2>
                         <button
                             onClick={onCancel}
-                            className="p-2 hover:bg-zinc-800 rounded-full transition-colors text-gray-400 hover:text-white"
+                            className="p-2 hover:bg-zinc-800 rounded-full transition-colors text-gray-400 hover:text-white cursor-pointer"
                         >
                             <X className="h-5 w-5" />
                         </button>
@@ -178,7 +197,34 @@ export function ProductForm({ initialData, onSubmit, onCancel }: ProductFormProp
                                     </select>
                                 </div>
                             </div>
+
+                            {/* Section for sizes if category is Ropa */}
+                            {formData.category === 'Ropa' && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="space-y-2"
+                                >
+                                    <label className="block text-sm font-medium text-white">Tallas Disponibles</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {availableSizes.map(size => (
+                                            <button
+                                                key={size}
+                                                type="button"
+                                                onClick={() => toggleSize(size)}
+                                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${formData.sizes?.includes(size)
+                                                        ? 'bg-white text-black'
+                                                        : 'bg-zinc-800 border border-gray-700 text-gray-400 hover:border-gray-500'
+                                                    }`}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
                         </div>
+
 
                         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-800">
                             <Button type="button" variant="outline" onClick={onCancel} className="hover:bg-zinc-800 border-gray-700 text-black hover:text-white">

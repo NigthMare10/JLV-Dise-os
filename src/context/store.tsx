@@ -24,6 +24,7 @@ const defaultProducts: Product[] = [
         price: 450,
         imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=500',
         category: 'Ropa',
+        sizes: ['S', 'M', 'L', 'XL'],
         soldCount: 120,
         createdAt: new Date().toISOString(),
     },
@@ -44,6 +45,7 @@ const defaultProducts: Product[] = [
         price: 800,
         imageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=500',
         category: 'Ropa',
+        sizes: ['S', 'M', 'L', 'XL'],
         soldCount: 200,
         createdAt: new Date().toISOString(),
     },
@@ -151,23 +153,29 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
-    const addToCart = (product: Product) => {
+    const addToCart = (product: Product, quantity: number = 1, selectedSize?: string) => {
         setCart(prev => {
-            const existing = prev.find(item => item.id === product.id);
+            const existing = prev.find(item => item.id === product.id && item.selectedSize === selectedSize);
             if (existing) {
-                return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+                return prev.map(item => (item.id === product.id && item.selectedSize === selectedSize)
+                    ? { ...item, quantity: item.quantity + quantity }
+                    : item
+                );
             }
-            return [...prev, { ...product, quantity: 1 }];
+            return [...prev, { ...product, quantity, selectedSize }];
         });
     };
 
-    const removeFromCart = (id: string) => {
-        setCart(prev => prev.filter(item => item.id !== id));
+    const removeFromCart = (id: string, selectedSize?: string) => {
+        setCart(prev => prev.filter(item => !(item.id === id && item.selectedSize === selectedSize)));
     };
 
-    const updateCartQuantity = (id: string, quantity: number) => {
+    const updateCartQuantity = (id: string, quantity: number, selectedSize?: string) => {
         if (quantity < 1) return;
-        setCart(prev => prev.map(item => item.id === id ? { ...item, quantity } : item));
+        setCart(prev => prev.map(item => (item.id === id && item.selectedSize === selectedSize)
+            ? { ...item, quantity }
+            : item
+        ));
     };
 
     const clearCart = () => setCart([]);
